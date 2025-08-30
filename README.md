@@ -1,7 +1,7 @@
 # 📂 Data Science & Machine Learning Projects
 
 This repository contains a collection of **data science and machine learning projects** that showcase my work across exploratory data analysis (EDA), predictive modeling, and early-stage AI research.  
-Each project highlights different aspects of the field — from working with structured datasets to experimenting with reasoning architectures.  
+Each project highlights different aspects of the field, from working with structured datasets to experimenting with reasoning architectures.  
 
 ---
 
