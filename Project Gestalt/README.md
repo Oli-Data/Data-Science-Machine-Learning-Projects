@@ -40,5 +40,5 @@ Right now, the focus is on:
 ---
 
 ## 🤝 Notes
-This project is exploratory — it may evolve significantly over time.  
+This project is exploratory, it may evolve significantly over time.  
 For now, the priority is **experimentation, learning, and building a foundation** for more advanced AI systems.  
