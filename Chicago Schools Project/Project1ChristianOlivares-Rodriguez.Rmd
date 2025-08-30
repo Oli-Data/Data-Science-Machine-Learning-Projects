@@ -1,0 +1,285 @@
+---
+title: "Project 1"
+author: "Christian Olivares-Rodriguez"
+date: "2023-11-15"
+output: pdf_document
+---
+
+```{r Data Import, include = FALSE}
+df = read.csv("/Users/christianolivares/R Files/Chicago_Public_Schools_-_Progress_Report_Cards__2011-2012_.csv", header = TRUE)
+```
+
+### Introduction
+Educational success is essential for individual and societal prosperity; my analysis aims to investigate factors influencing the performance of Chicago Public Schools during the 2011-2012 year, looking at variables like student attendance, and school environment. My study will identify critical determinants of academic success crucial for student well-being and community improvement. 
+
+- The data that was used for this analysis is from a .csv file from Chicago Public Schools - Progress Report Cards (2011-2012) 
+
+- https://data.cityofchicago.org/Education/Chicago-Public-Schools-Progress-Report-Cards-2011-/9xs2-f89t
+
+### Disclosure
+Some of the data from the schools were not provided in the .csv file because of an NDA, or there wasn't enough data to take it into account.
+So all of the high schools from this data set have been omitted.
+
+
+### Libraries and Filter
+```{r libraries, echo = TRUE, message = FALSE, warning = FALSE}
+library(dplyr)
+library(ggplot2)
+
+df = df %>% filter(Elementary..Middle..or.High.School != "HS")
+```
+
+dplyr was used to typecast a variables to different types, from text to a number.
+
+ggplot2 was used to plot all the graphs from bar to scatter plot.
+
+The filter was applied to remove all variables related to the information from high schools.
+
+### Getting to know the data
+
+Let's first start of by getting to know some of the data
+
+
+## First off the amount of elementary school and middle schools that in are in the .csv file
+```{r Number of Schools, echo = FALSE, results ='asis'}
+
+ggplot(df, aes(x = Elementary..Middle..or.High.School)) +
+  geom_bar(fill = "skyblue", alpha = 0.7) +
+  labs(title = "Number of Schools by Type", x = "School Type", y = "Count") 
+```
+
+- ES means: Elementary School
+
+- MS means: Middle School
+
+Showing that the majority of the data that was collected was from Elementary School.
+
+## Secondly their attendence rates
+
+```{r Average Attendance by School Type, echo = FALSE, results ='asis'}
+average_attendance_by_type = df %>%
+  group_by(Elementary..Middle..or.High.School) %>%
+  summarise(Average_Attendance = mean(Average.Student.Attendance, na.rm = TRUE))
+
+ggplot(average_attendance_by_type, aes(x = Elementary..Middle..or.High.School, y = Average_Attendance)) +
+  geom_bar(stat = "identity", fill = "coral", alpha = 0.7) +
+  labs(title = "Average Attendance by School Type",
+       x = "School Type",
+       y = "Average Attendance (%)") +
+       ylim(0, 100)
+
+```
+
+### Lastly if they have a Supportive Environment
+``` {r,  echo = FALSE, results ='asis'}
+
+average_scores = df %>%
+  filter(Elementary..Middle..or.High.School %in% c("ES", "MS")) %>%
+  group_by(Elementary..Middle..or.High.School) %>%
+  summarize(Average_Environment_Score = mean(Environment.Score, na.rm = TRUE))
+
+ggplot(average_scores, 
+       aes(x = Elementary..Middle..or.High.School,
+           y = Average_Environment_Score, fill = Elementary..Middle..or.High.School)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Environment Score for ES and MS Students",
+       x = "School Type",
+       y = "Average Environment Score") +
+       ylim(0, 100)
+```
+
+### Exploring Data
+The data set has was 79 Columns and 566 rows where each row is a school.
+After looking into the different Columns I noticed that some of them like graduation rate were completely unusable because there was only a couple of schools that provided the information while the others had it filled with NDA.
+
+So, I focused on other variables that could assist me with finding what grades the students might have, and I found that even though they have an NDA on their graduation rate, most of the schools show the percentage of whether their students are at grade level through the columns Pk.2.Literacy.., Pk.2.Math.., Gr3.5.Grade.Level.Math.., Gr3.5.Grade.Level.Read.., Gr6.8.Grade.Level.Math.., and Gr6.8.Grade.Level.Read... 
+
+- Pk.2 meaning: Preschool to 2nd grade
+
+- Gr3.5 meaning: 3rd to 5th grade
+
+- Gr6.8 meaning: 6th to 8th grade
+
+The only problem with the information was that they were type text and needed to be converted to a number to use the percentages in graphs for visualization or an x or y variable to use in Pearson's formula.
+
+So, I converted it and put the data back into the data frame.
+
+## Code used for conversion 
+```{r converting Text to numbers, message = FALSE, results='asis'}
+
+df = df %>%
+  mutate(
+    Pk.2.Literacy.. = as.numeric(gsub("[^0-9]", "", Pk.2.Literacy..)) / 10,
+    Pk.2.Math.. = as.numeric(gsub("[^0-9]", "", Pk.2.Math..)) / 10,
+    
+    Gr3.5.Grade.Level.Math.. = as.numeric(gsub("[^0-9]", "", Gr3.5.Grade.Level.Math..)) / 10,
+    Gr3.5.Grade.Level.Read.. = as.numeric(gsub("[^0-9]", "", Gr3.5.Grade.Level.Read..)) / 10,
+    
+    Gr6.8.Grade.Level.Math.. = as.numeric(gsub("[^0-9]", "", Gr3.5.Grade.Level.Math..)) / 10,
+    Gr6.8.Grade.Level.Read.. = as.numeric(gsub("[^0-9]", "", Gr6.8.Grade.Level.Read..)) / 10
+  )
+
+
+```
+
+After that, I started exploring values that could affect the data, I went back to the columns and found Environment.Score which is score on if the environment is supportive from 5 Essentials survey that range from 1 to 99, 99 meaning best.
+
+Now that I had my variable I needed to put it against Pk.2.Literacy.., Pk.2.Math.., Gr3.5.Grade.Level.Math.., Gr3.5.Grade.Level.Read.., Gr6.8.Grade.Level.Math.., and Gr6.8.Grade.Level.Read.. to see if they had any correlation with each other.
+
+So, I created multiple visualizations of the data with a for loop.
+
+### Environment Score vs Student at Grade Level Visualizations along with code used
+```{r Environment Score Graphs, warning=FALSE}
+# Vector of variables and corresponding colors
+variables = c("Pk.2.Literacy..",
+              "Pk.2.Math..",
+              "Gr3.5.Grade.Level.Read..",
+              "Gr3.5.Grade.Level.Math..",
+              "Gr6.8.Grade.Level.Read..",
+              "Gr6.8.Grade.Level.Math..")
+colors = c("blue", "blue", "red", "red", "purple", "purple")
+
+# Vector of titles
+titles = c("Environment Score vs Pk.2 Literacy",
+            "Environment Score vs Pk.2 Math",
+            "Environment Scores vs % of 3-5 Students at Reading Grade Level",
+            "Environment Scores vs % of 3-5 Students at Mathematic Grade Level",
+            "Environment Scores vs % of 6-8 Students at Reading Grade Level",
+            "Environment Scores vs % of 6-8 Students at Mathematic Grade Level")
+
+# Vector of x-axis labels
+x_labels = c("Pk.2 Literacy",
+              "Pk.2 Math",
+              "School's % of 3-5 Students at Reading Grade Level",
+              "School's % of 3-5 Students at Mathematic Grade Level",
+              "School's % of 6-8 Students at Reading Grade Level",
+              "School's % of 6-8 Students at Mathematic Grade Level")
+
+# Loop over the variables to create plots
+for (i in seq_along(variables)) {
+  ggplot(df, aes_string(x = variables[i], y = "Environment.Score")) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y ~ x, color = colors[i]) +
+    labs(title = titles[i],
+         x = x_labels[i],
+         y = "Environment Score") +
+    theme_minimal()
+  print(last_plot())
+}
+```
+
+
+With the graphs I noticed that there might be a slight correlation between Environment Scores and the Grade Level variables so I created a for loop to process the variables in Pearson's Formula.
+
+### Code for Pearson's Formula Environment Score 
+```{r pearson correlation Environment Score}
+
+# Vector of column names to correlate with Environment.Score
+variables = c("Pk.2.Literacy..",
+              "Pk.2.Math..",
+              "Gr3.5.Grade.Level.Read..",
+              "Gr3.5.Grade.Level.Math..",
+              "Gr6.8.Grade.Level.Read..",
+              "Gr6.8.Grade.Level.Math..")
+
+# Loop over the variables and calculate Pearson's correlation coefficient
+for (var in variables) {
+  x = df[[var]]
+  y = df$Environment.Score
+
+  # Pearson's correlation
+  correlation = cor(x, y, use = "complete.obs") 
+
+  # Output the result
+  print(paste("Correlation between", var, "and Environment.Score:", correlation))
+}
+```
+
+With the data we can notice that:
+
+- Preschool-2nd grade has a very low correlation with an average between Pk.2.Literacy..
+and Pk.2.Math.. being 0.100384227687.
+
+- 3rd-5th grade has a slightly higher correlation between Gr3.5.Grade.Level.Read.. and Gr3.5.Grade.Level.Math.. with and average of 0.249065453672, which is still relatively weak.
+
+- 6th-8th grade have a similar correlation as 3rd-5th with the average of 0.231935172543 between the variables Gr6.8.Grade.Level.Read.. and Gr6.8.Grade.Level.Math...
+
+Now, knowing that there wasn't much of a correlation between the Environment.Score I moved on to a different variable Average.Student.Attendance. Similarly to the previous variable, I created a for loop.
+
+### Average Student Attendance, for loop code and visualization 
+```{r Average Student Attendance Graphs, warning=FALSE}
+# Vector of variables and corresponding colors
+variables = c("Pk.2.Literacy..",
+              "Pk.2.Math..",
+              "Gr3.5.Grade.Level.Read..",
+              "Gr3.5.Grade.Level.Math..",
+              "Gr6.8.Grade.Level.Read..",
+              "Gr6.8.Grade.Level.Math..")
+colors = c("blue", "blue", "red", "red", "purple", "purple")
+
+# Vector of titles
+titles = c("Average Student Attendance vs Pk.2 Literacy",
+            "Average Student Attendance vs Pk.2 Math",
+            "Average Student Attendance vs % 3-5 Students at Reading Grade Level",
+            "Average Student Attendance vs % of 3-5 Students at Math Grade Level",
+            "Average Student Attendance vs % of 6-8 Students at Reading Grade Level",
+            "Average Student Attendance vs % of 6-8 Students at Math Grade Level")
+
+# Vector of x-axis labels
+x_labels = c("Pk.2 Literacy",
+              "Pk.2 Math",
+              "School's % of 3-5 Students at Reading Grade Level",
+              "School's % of 3-5 Students at Mathematic Grade Level",
+              "School's % of 6-8 Students at Reading Grade Level",
+              "School's % of 6-8 Students at Mathematic Grade Level")
+
+# Loop over the variables to create plots
+for (i in seq_along(variables)) {
+  ggplot(df, aes_string(x = variables[i], y = "Average.Student.Attendance")) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y ~ x, color = colors[i]) +
+    labs(title = titles[i],
+         x = x_labels[i],
+         y = "Average Student Attendance") +
+    theme_minimal()
+  print(last_plot())
+}
+```
+
+With these graphs, we can notice a correlation between Average.Student.Attendance and Pk.2.Literacy.., Pk.2.Math.., Gr3.5.Grade.Level.Math.., Gr3.5.Grade.Level.Read.., Gr6.8.Grade.Level.Math.., and Gr6.8.Grade.Level.Read.. are much higher than Environment.Score. So, I created a for loop to process the variables in Pearson's Formula.
+
+### Pearson correlation Average Student Attendance
+```{r Pearson correlation Average Student Attendance}
+variables = c("Pk.2.Literacy..",
+              "Pk.2.Math..",
+              "Gr3.5.Grade.Level.Read..",
+              "Gr3.5.Grade.Level.Math..",
+              "Gr6.8.Grade.Level.Read..",
+              "Gr6.8.Grade.Level.Math..")
+
+# Loop over the variables and calculate Pearson's correlation coefficient
+for (var in variables) {
+  x = df[[var]]
+  y = df$Average.Student.Attendance
+
+  # Pearson's correlation
+  correlation = cor(x, y, use = "complete.obs") 
+
+  # Output the result
+  print(paste("Correlation between", var, "and Average.Student.Attendance", correlation))
+}
+
+```
+
+With this data we can notice that:
+
+- Preschool-2nd grade has a very low correlation with an average between Pk.2.Literacy..
+and Pk.2.Math.. being 0.242082.
+
+- 3rd-5th grade has moderate correlation between Gr3.5.Grade.Level.Read.. and Gr3.5.Grade.Level.Math.. with an average of 0.515956.
+
+- 6th-8th grade have a similar correlation as 3rd-5th with the average of 0.501953 between the variables Gr6.8.Grade.Level.Read.. and Gr6.8.Grade.Level.Math...
+
+
+### Conclusion
+Even with all the NDAs in the .csv file from Chicago Public Schools there was still some interesting data. There wasn't a definitive correlation with the variables, but there was a higher correlation between Average.Student.Attendance and the Students being at grade level in comparison to the results with Environment.Score. Additionally, Average.Student.Attendance is a significant factor in older students' academic success. We could use the data collected to dive deeper into the variables with newer, more robust data with fewer restrictions.
