@@ -1,7 +1,7 @@
 # 🧠 Project Gestalt
 
 **Project Gestalt** is an early-stage exploration into building AI systems that go beyond surface-level pattern recognition.  
-The project focuses on **reasoning, structure, and emergent behavior** — experimenting with how different models, techniques, and frameworks can combine into something greater than the sum of their parts.  
+The project focuses on **reasoning, structure, and emergent behavior**. Experimenting with how different models, techniques, and frameworks can combine into something greater than the sum of their parts.  
 
 ---
 
