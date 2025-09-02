@@ -17,6 +17,4 @@ The dataset includes reported crimes in Chicago and contains fields such as:
 - **Primary Type, FBI Code, IUCR** → crime category identifiers  
 - **Arrest, Domestic** → target labels for classification  
 
-_Source:_ [City of Chicago Data Portal](https://data.cityofchicago.org/d/ijzp-q8t2)
-
-[City of Chicago — Crimes 2001-Present](<https://data.cityofchicago.org/d/ijzp-q8t2>)
+_Source:_ https://data.cityofchicago.org/d/ijzp-q8t2
